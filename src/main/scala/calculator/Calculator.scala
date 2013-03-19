@@ -13,34 +13,17 @@ object Calculator {
       }
   }
 
-  sealed trait Operator {
-    def operate(lhs: Int, rhs: Int): Int
-  }
+  type Operator = (Int, Int) => Int
 
   object Operator {
-    val operators = Map(
-      "+" -> Add,
-      "-" -> Subtract,
-      "*" -> Multiply,
-      "/" -> Divide)
+    val operators = Map[String, Operator](
+      "+" -> { _ + _ },
+      "-" -> { _ - _ },
+      "*" -> { _ * _ },
+      "/" -> { _ / _ }
+    )
     def unapply(token: String): Option[Operator] =
       operators.get(token)
-  }
-
-  object Add extends Operator {
-    def operate(lhs: Int, rhs: Int): Int = lhs + rhs
-  }
-
-  object Subtract extends Operator {
-    def operate(lhs: Int, rhs: Int): Int = lhs - rhs
-  }
-
-  object Multiply extends Operator {
-    def operate(lhs: Int, rhs: Int): Int = lhs * rhs
-  }
-
-  object Divide extends Operator {
-    def operate(lhs: Int, rhs: Int): Int = lhs / rhs
   }
 
   def calculate(expression: String): Int = {
@@ -54,7 +37,7 @@ object Calculator {
         case Operator(op) =>
           val rhs = stack.pop()
           val lhs = stack.pop()
-          stack.push(op.operate(lhs, rhs))
+          stack.push(op(lhs, rhs))
         case _ =>
           throw new IllegalArgumentException("invalid token: " + token)
       }
