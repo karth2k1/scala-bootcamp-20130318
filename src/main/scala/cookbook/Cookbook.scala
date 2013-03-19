@@ -1,23 +1,21 @@
 package cookbook
 
-class Recipe(val ingredients: List[String], val directions: List[String])
-
-object Recipe {
-  def apply(ingredients: List[String], directions: List[String]) =
-    new Recipe(ingredients, directions)
-  
-  def unapply(recipe: Recipe): Option[(List[String], List[String])] =
-    Some((recipe.ingredients, recipe.directions))
+trait Normalizable {
+  def toGrams: Gram = Gram(0)
 }
 
-class Cookbook(val recipes: Map[String, Recipe])
-
-object Cookbook {
-  def apply(recipes: Map[String, Recipe]): Cookbook =
-    new Cookbook(recipes)
-  def empty: Cookbook =
-    new Cookbook(Map.empty)
-
-  def unapply(cookbook: Cookbook): Option[Map[String, Recipe]] =
-    Some(cookbook.recipes)
+sealed trait Measure {
+  def value: Int = 0
 }
+
+case class Gram(override val value: Int) extends Measure with Normalizable {
+  override def toGrams: Gram = this
+}
+
+case class Kilogram(override val value: Int) extends Measure with Normalizable {
+  override def toGrams: Gram = Gram(value * 1000)
+}
+
+case class Recipe(ingredients: List[String], directions: List[String])
+
+case class Cookbook(recipes: Map[String, Recipe])
