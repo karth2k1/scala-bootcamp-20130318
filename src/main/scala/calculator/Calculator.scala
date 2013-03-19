@@ -4,39 +4,51 @@ import collection.mutable.Stack
 
 object Calculator {
 
-  def main(args: Array[String]): Unit = args match {
-    case Array(expression) =>
-      // split expression into tokens
-      val tokens = expression.split(" ")
+  def handleNumber(token: String, stack: Stack[Int]): Boolean =
+    try {
+      stack.push(token.toInt)
+      true
+    } catch {
+      case e: NumberFormatException => false
+    }
 
-      val stack = new Stack[Int]
-
-      // for each token ...
-      for (token <- tokens)
+  def handleOperator(token: String, stack: Stack[Int]): Boolean =
+    token match {
+      case "+" | "-" | "*" | "/" =>
+        val rhs = stack.pop()
+        val lhs = stack.pop()
         token match {
-          // if it's an operator ...
-          case "+" | "-" | "*" | "/" =>
-            val rhs = stack.pop()
-            val lhs = stack.pop()
-            token match {
-              case "+" => stack.push(lhs + rhs)
-              case "-" => stack.push(lhs - rhs)
-              case "*" => stack.push(lhs * rhs)
-              case "/" => stack.push(lhs / rhs)
-            }
-
-          // if it's maybe a number ...
-          case _ => try {
-            val num = token.toInt
-            stack.push(num)
-          } catch {
-            case e: NumberFormatException =>
-              throw new IllegalArgumentException("invalid token", e)
-          }
+          case "+" =>
+            stack.push(lhs + rhs)
+            true
+          case "-" =>
+            stack.push(lhs - rhs)
+            true
+          case "*" =>
+            stack.push(lhs * rhs)
+            true
+          case "/" =>
+            stack.push(lhs / rhs)
+            true
         }
-      println(stack.pop())
+      case _ => false
+    }
 
-    case _ => println("Usage: Calculator <expression>")
+  def calculate(expression: String): Int = {
+    val tokens = expression.split(" ")
+    val stack = new Stack[Int]
+
+    for (token <- tokens)
+      if (!handleNumber(token, stack) && !handleOperator(token, stack))
+        throw new IllegalArgumentException("invalid token: " + token)
+
+    stack.pop()
   }
+
+  def main(args: Array[String]): Unit =
+    args match {
+      case Array(expression) => println(calculate(expression))
+      case _ => println("Usage: Calculator <expression>")
+    }
 
 }
