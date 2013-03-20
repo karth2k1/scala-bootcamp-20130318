@@ -2,6 +2,10 @@ package calculator
 
 object Calculator {
 
+  sealed trait Expression
+  case class OperationExpression(lhs: Expression, rhs: Expression, op: Operator) extends Expression
+  case class NumberExpression(value: Int) extends Expression
+
   object Number {
     def unapply(token: String): Option[Int] =
       try {
@@ -23,28 +27,36 @@ object Calculator {
       operators.get(token)
   }
 
-  def step(stack: List[Int], token: String): List[Int] =
+  def step(stack: List[Expression], token: String): List[Expression] =
     token match {
       case Number(num) =>
-        num :: stack
+        NumberExpression(num) :: stack
       case Operator(op) =>
         stack match {
-          case rhs :: lhs :: tail => op(lhs, rhs) :: tail
+          case rhs :: lhs :: tail => OperationExpression(lhs, rhs, op) :: tail
           case _ => throw new IllegalArgumentException("not enough operands")
         }
       case _ =>
         throw new IllegalArgumentException("invalid token: " + token)
     }
 
-  def calculate(expression: String): Int = {
+  def parse(expression: String): Expression = {
     val tokens = expression.split(" ")
-    val stack = tokens.foldLeft(List.empty[Int]) { step }
+    val stack = tokens.foldLeft(List.empty[Expression]) { step }
     stack.head
   }
 
+  def calculate(expression: Expression): Int =
+    expression match {
+      case OperationExpression(lhs, rhs, op) => op(calculate(lhs), calculate(rhs))
+      case NumberExpression(num) => num
+    }
+
   def main(args: Array[String]): Unit =
     args match {
-      case Array(expression) => println(calculate(expression))
+      case Array(expression) =>
+        val tree = parse(expression)
+        println(calculate(tree))
       case _ => println("Usage: Calculator <expression>")
     }
 
