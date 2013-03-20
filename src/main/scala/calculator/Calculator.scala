@@ -1,7 +1,5 @@
 package calculator
 
-import collection.mutable.Stack
-
 object Calculator {
 
   object Number {
@@ -20,29 +18,28 @@ object Calculator {
       "+" -> { _ + _ },
       "-" -> { _ - _ },
       "*" -> { _ * _ },
-      "/" -> { _ / _ }
-    )
+      "/" -> { _ / _ })
     def unapply(token: String): Option[Operator] =
       operators.get(token)
   }
 
+  def step(stack: List[Int], token: String): List[Int] =
+    token match {
+      case Number(num) =>
+        num :: stack
+      case Operator(op) =>
+        stack match {
+          case rhs :: lhs :: tail => op(lhs, rhs) :: tail
+          case _ => throw new IllegalArgumentException("not enough operands")
+        }
+      case _ =>
+        throw new IllegalArgumentException("invalid token: " + token)
+    }
+
   def calculate(expression: String): Int = {
     val tokens = expression.split(" ")
-    val stack = new Stack[Int]
-
-    for (token <- tokens)
-      token match {
-        case Number(num) =>
-          stack.push(num)
-        case Operator(op) =>
-          val rhs = stack.pop()
-          val lhs = stack.pop()
-          stack.push(op(lhs, rhs))
-        case _ =>
-          throw new IllegalArgumentException("invalid token: " + token)
-      }
-
-    stack.pop()
+    val stack = tokens.foldLeft(List.empty[Int]) { step }
+    stack.head
   }
 
   def main(args: Array[String]): Unit =
