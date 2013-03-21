@@ -1,7 +1,7 @@
 package object monads {
 
   /*** FAILURE ***/
-  
+
   sealed trait Option[+A] {
     def get: A
     def map[B](fn: A => B): Option[B]
@@ -20,7 +20,7 @@ package object monads {
   }
 
   /*** DELAYED COMPUTATION ***/
-  
+
   case class Future[A](get: () => A) {
     def map[B](fn: A => B): Future[B] =
       Future { () => fn(get()) }
@@ -32,9 +32,23 @@ package object monads {
 
   case class Reader[E, A](run: E => A) {
     def map[B](fn: A => B): Reader[E, B] =
-      ??? // see Future.map
+      Reader { e => fn(run(e)) }
     def flatMap[B](fn: A => Reader[E, B]): Reader[E, B] =
-      ??? // see Future.flatMap
+      Reader { e => fn(run(e)).run(e) }
   }
 
+  /*** STATE ***/
+
+  case class State[S, A](run: S => (S, A)) {
+    def map[B](fn: A => B): State[S, B] =
+      State { s0 =>
+        val (s1, a) = run(s0)
+        (s1, fn(a))
+      }
+    def flatMap[B](fn: A => State[S, B]): State[S, B] =
+      State { s0 =>
+        val (s1, a) = run(s0)
+        fn(a).run(s1)
+      }
+  }
 }
