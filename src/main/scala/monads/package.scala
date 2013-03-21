@@ -21,9 +21,12 @@ package object monads {
 
   /*** FUTURE ***/
   
-  case class Future[A](run: () => A) {
-    def map[B](fn: A => B): Future[B] = ???
-    def flatMap[B](fn: A => Future[B]): Future[B] = ???
+  class Future[A](get: => A) {
+    def run: A = get
+    def map[B](fn: A => B): Future[B] =
+      new Future(fn(get))
+    def flatMap[B](fn: A => Future[B]): Future[B] =
+      new Future(fn(get).run)
   }
 
 }
