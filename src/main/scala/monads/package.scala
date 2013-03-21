@@ -21,12 +21,11 @@ package object monads {
 
   /*** DELAYED COMPUTATION ***/
   
-  class Future[A](get: => A) {
-    def run: A = get
+  case class Future[A](get: () => A) {
     def map[B](fn: A => B): Future[B] =
-      new Future(fn(get))
+      Future { () => fn(get()) }
     def flatMap[B](fn: A => Future[B]): Future[B] =
-      new Future(fn(get).run)
+      Future { () => fn(get()).get() }
   }
 
   /*** DEPENDENCY INJECTION ***/
