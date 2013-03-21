@@ -10,11 +10,11 @@ object Generics {
   val dogBox: Box[Dog] = Box(new Dog)
   val puppyBox: Box[Puppy] = Box(new Puppy)
 
-  def getDog(box: Box[_ <: Dog]): Dog = box.contents
+  def getDog[A <: Dog](box: Box[A]): A = box.contents
   def putDog(box: Box[Dog]): Unit = box.contents = new Dog
 
   def getPuppy(box: Box[Puppy]): Puppy = box.contents
-  def putPuppy(box: Box[_ >: Puppy]): Unit = box.contents = new Puppy
+  def putPuppy[A >: Puppy](box: Box[A]): Unit = box.contents = new Puppy
 
   getDog(dogBox)
   getDog(puppyBox) // -- makes sense
