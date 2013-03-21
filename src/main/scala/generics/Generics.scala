@@ -5,25 +5,33 @@ object Generics {
   class Dog
   class Puppy extends Dog
 
-  case class Box[A](var contents: A)
+  trait Producer[+A] {
+    def get: A = ???
+  }
+  trait Consumer[-A] {
+    def put(value: A): Unit = ???
+  }
+  class Box[A] extends Producer[A] with Consumer[A]
 
-  val dogBox: Box[Dog] = Box(new Dog)
-  val puppyBox: Box[Puppy] = Box(new Puppy)
+  val dogGetBox: Producer[Dog] = new Box()
+  val dogPutBox: Consumer[Dog] = new Box()
+  val puppyGetBox: Producer[Puppy] = new Box()
+  val puppyPutBox: Consumer[Puppy] = new Box()
 
-  def getDog[A <: Dog](box: Box[A]): A = box.contents
-  def putDog(box: Box[Dog]): Unit = box.contents = new Dog
+  def getDog(box: Producer[Dog]): Dog = box.get
+  def putDog(box: Consumer[Dog]): Unit = box.put(new Dog)
 
-  def getPuppy(box: Box[Puppy]): Puppy = box.contents
-  def putPuppy[A >: Puppy](box: Box[A]): Unit = box.contents = new Puppy
+  def getPuppy(box: Producer[Puppy]): Puppy = box.get
+  def putPuppy(box: Consumer[Puppy]): Unit = box.put(new Puppy)
 
-  getDog(dogBox)
-  getDog(puppyBox) // -- makes sense
-  putDog(dogBox)
-  // putDog(puppyBox) -- doesn't make sense
+  getDog(dogGetBox)
+  getDog(puppyGetBox) // -- makes sense
+  putDog(dogPutBox)
+  // putDog(puppyPutBox) -- doesn't make sense
 
-  getPuppy(puppyBox)
+  getPuppy(puppyGetBox)
   // getPuppy(dogBox) -- doesn't make sense
-  putPuppy(puppyBox)
-  putPuppy(dogBox) // -- makes sense
+  putPuppy(puppyPutBox)
+  putPuppy(dogPutBox) // -- makes sense
 
 }
