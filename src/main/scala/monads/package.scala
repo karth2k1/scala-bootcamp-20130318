@@ -1,5 +1,7 @@
 package object monads {
 
+  /*** OPTION ***/
+  
   sealed trait Option[+A] {
     def get: A
     def map[B](fn: A => B): Option[B]
@@ -15,6 +17,13 @@ package object monads {
     def get: Nothing = throw new NoSuchElementException
     def map[B](fn: Nothing => B): Option[B] = None
     def flatMap[B](fn: Nothing => Option[B]): Option[B] = None
+  }
+
+  /*** FUTURE ***/
+  
+  case class Future[A](run: () => A) {
+    def map[B](fn: A => B): Future[B] = ???
+    def flatMap[B](fn: A => Future[B]): Future[B] = ???
   }
 
 }
