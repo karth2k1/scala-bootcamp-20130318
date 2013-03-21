@@ -1,6 +1,6 @@
 package object monads {
 
-  /*** OPTION ***/
+  /*** FAILURE ***/
   
   sealed trait Option[+A] {
     def get: A
@@ -19,7 +19,7 @@ package object monads {
     def flatMap[B](fn: Nothing => Option[B]): Option[B] = None
   }
 
-  /*** FUTURE ***/
+  /*** DELAYED COMPUTATION ***/
   
   class Future[A](get: => A) {
     def run: A = get
@@ -27,6 +27,15 @@ package object monads {
       new Future(fn(get))
     def flatMap[B](fn: A => Future[B]): Future[B] =
       new Future(fn(get).run)
+  }
+
+  /*** DEPENDENCY INJECTION ***/
+
+  case class Reader[E, A](run: E => A) {
+    def map[B](fn: A => B): Reader[E, B] =
+      ??? // see Future.map
+    def flatMap[B](fn: A => Reader[E, B]): Reader[E, B] =
+      ??? // see Future.flatMap
   }
 
 }
