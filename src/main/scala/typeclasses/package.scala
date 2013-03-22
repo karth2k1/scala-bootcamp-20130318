@@ -5,13 +5,22 @@ package object typeclasses {
     def append(lhs: A, rhs: A): A
   }
 
-  // TODO:
-  // 1. implement Monoid instances for Int and String
-  // 2. implement monoidFold
+  implicit val intMonoid: Monoid[Int] = new Monoid[Int] {
+    def id: Int = 0
+    def append(lhs: Int, rhs: Int): Int = lhs + rhs
+  }
 
-  implicit val intMonoid: Monoid[Int] = ???
-  implicit val stringMonoid: Monoid[String] = ???
+  implicit val stringMonoid: Monoid[String] = new Monoid[String] {
+    def id: String = ""
+    def append(lhs: String, rhs: String): String = lhs + rhs
+  }
 
-  def monoidFold[A](l: List[A])(implicit m: Monoid[A]): A = ???
+  implicit def listMonoid[A]: Monoid[List[A]] = new Monoid[List[A]] {
+    def id: List[A] = List.empty[A]
+    def append(lhs: List[A], rhs: List[A]): List[A] = lhs ::: rhs
+  }
+
+  def monoidFold[A](l: List[A])(implicit m: Monoid[A]): A =
+    l.foldLeft(m.id)(m.append)
 
 }

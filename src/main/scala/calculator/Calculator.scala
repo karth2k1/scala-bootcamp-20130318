@@ -27,23 +27,25 @@ object Calculator {
       operators.get(token)
   }
 
-  def step(stack: List[Expression], token: String): List[Expression] =
+  def step(stack: List[Expression], token: String): Option[List[Expression]] =
     token match {
       case Number(num) =>
-        NumberExpression(num) :: stack
+        Some(NumberExpression(num) :: stack)
       case Operator(op) =>
         stack match {
-          case rhs :: lhs :: tail => OperationExpression(lhs, rhs, op) :: tail
-          case _ => throw new IllegalArgumentException("not enough operands")
+          case rhs :: lhs :: tail => Some(OperationExpression(lhs, rhs, op) :: tail)
+          case _ => None
         }
-      case _ =>
-        throw new IllegalArgumentException("invalid token: " + token)
+      case _ => None
     }
 
-  def parse(expression: String): Expression = {
+  def optionStep(stack: Option[List[Expression]], token: String): Option[List[Expression]] =
+    stack flatMap { step(_, token) }
+
+  def parse(expression: String): Option[Expression] = {
     val tokens = expression.split(" ")
-    val stack = tokens.foldLeft(List.empty[Expression]) { step }
-    stack.head
+    val stack = tokens.foldLeft(Option(List.empty[Expression])) { optionStep }
+    stack map { _.head }
   }
 
   def calculate(expression: Expression): Int =
@@ -55,8 +57,10 @@ object Calculator {
   def main(args: Array[String]): Unit =
     args match {
       case Array(expression) =>
-        val tree = parse(expression)
-        println(calculate(tree))
+        parse(expression) match {
+          case Some(tree) => println(calculate(tree))
+          case None => println("invalid expression")
+        }
       case _ => println("Usage: Calculator <expression>")
     }
 
