@@ -21,25 +21,29 @@ package object actors {
       }
   }
 
-  // TODO this actor should
-  //   1. compute a fibonacci number
-  //   2. log the result
-  //   3. somehow signal that it's ready to compute another
-  // also it should be shutdown-able
+  case object Fib
   class Fib extends Actor {
-    def receive(message: Any): Unit = ???
+    def receive(message: Any): Unit =
+      message match {
+        case Shutdown => shutdown()
+        case Fib =>
+          Logger ! randomFib
+          this ! Fib
+      }
   }
 
   def main(args: Array[String]): Unit = {
     val pool = Executors.newCachedThreadPool
-    pool execute Logger
 
-    while (true) {
-      val task = new Runnable {
-        def run(): Unit = Logger ! randomFib
-      }
-      pool execute task
-    }
+    val actors = Logger +: (for (_ <- 1 to 10) yield {
+      val fib = new Fib
+      fib ! Fib
+      fib
+    })
+
+    actors foreach { pool execute _ }
+    readLine()
+    actors foreach { _ ! Shutdown }
 
     pool.shutdown()
   }
