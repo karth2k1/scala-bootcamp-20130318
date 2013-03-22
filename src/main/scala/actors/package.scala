@@ -11,13 +11,9 @@ package object actors {
 
   def randomFib: BigInt = fib(Random nextInt 35)
 
-  object Logger extends Runnable {
-    private val messages: BlockingQueue[String] =
-      new LinkedBlockingQueue[String]
-
-    def log(message: String): Unit = messages.put(message)
-    def run(): Unit =
-      while (true) println(messages.take())
+  object Logger extends Actor {
+    def receive(message: Any): Unit =
+      println(message)
   }
 
   def main(args: Array[String]): Unit = {
@@ -26,7 +22,7 @@ package object actors {
 
     for (_ <- 1 to 20) {
       val task = new Runnable {
-        def run(): Unit = Logger log randomFib.toString
+        def run(): Unit = Logger ! randomFib
       }
       pool execute task
     }
