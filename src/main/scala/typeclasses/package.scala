@@ -115,15 +115,12 @@ package object typeclasses {
   }
 
   implicit val stringJson: Json[String] = new Json[String] {
-    def toJson(a: String): String = ???
-    def fromJson(json: String): Option[String] = ???
+    private val S = "\"(.*)\"".r
+    def toJson(a: String): String = "\"" + a + "\""
+    def fromJson(json: String): Option[String] = json match {
+      case S(string) => Some(string)
+      case _ => None
+    }
   }
-
-
-
-
-
-
-
 
 }
