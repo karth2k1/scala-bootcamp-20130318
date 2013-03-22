@@ -35,11 +35,13 @@ package object actors {
   def main(args: Array[String]): Unit = {
     val pool = Executors.newCachedThreadPool
 
-    val actors = Logger +: (for (_ <- 1 to 10) yield {
-      val fib = new Fib
-      fib ! Fib
-      fib
-    })
+    val fibs = for {
+      _   <- 1 to 10
+      fib  = new Fib
+      _    = fib ! Fib
+    } yield fib
+
+    val actors = Logger +: fibs
 
     actors foreach { pool execute _ }
     readLine()
