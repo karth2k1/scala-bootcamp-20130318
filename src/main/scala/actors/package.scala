@@ -1,6 +1,6 @@
 import util.Random
 
-import java.util.concurrent._
+import akka.actor._
 
 package object actors {
 
@@ -11,43 +11,39 @@ package object actors {
 
   def randomFib: BigInt = fib(Random nextInt 35)
 
-  case object Shutdown
-
-  object Logger extends Actor {
-    def receive(message: Any): Unit =
-      message match {
-        case Shutdown => shutdown()
-        case _ => println(message)
-      }
+  class Logger extends Actor {
+    def receive = {
+      case message => println(message)
+    }
   }
 
   case object Fib
-  class Fib extends Actor {
-    def receive(message: Any): Unit =
-      message match {
-        case Shutdown => shutdown()
-        case Fib =>
-          Logger ! randomFib
-          this ! Fib
-      }
+  class Fib(logger: ActorRef) extends Actor {
+    def receive = {
+      case Fib =>
+        logger ! randomFib
+        self ! Fib
+    }
   }
 
+  /*
+   * TODO
+   *   0 update build.sbt with akka, and restart
+   *     (maybe delete existing actor, or rename)
+   *   1 replace pool with actor system
+   *   2 update existing actors (ActorRef)
+   */
   def main(args: Array[String]): Unit = {
-    val pool = Executors.newCachedThreadPool
+    val system = ActorSystem()
+    val logger = system.actorOf(Props[Logger], "logger")
 
-    val fibs = for {
-      _   <- 1 to 10
-      fib  = new Fib
-      _    = fib ! Fib
-    } yield fib
+    for {
+      i   <- 1 to 10
+      fib  = system.actorOf(Props(new Fib(logger)), s"fib-$i")
+    } fib ! Fib
 
-    val actors = Logger +: fibs
-
-    actors foreach { pool execute _ }
     readLine()
-    actors foreach { _ ! Shutdown }
-
-    pool.shutdown()
+    system.shutdown
   }
 
 }
