@@ -2,6 +2,12 @@ import language.higherKinds
 
 package object typeclasses {
 
+  /*** SAFE EQUALITY (not really a type class) ***/
+
+  implicit class SafeEqual[A](lhs: A) {
+    def ===(rhs: A): Boolean = lhs == rhs
+  }
+
   /*** MONOID ***/
 
   trait Monoid[A] {
@@ -36,7 +42,7 @@ package object typeclasses {
     def flatMap[A, B](ma: M[A])(fn: A => M[B]): M[B]
   }
 
-  implicit class MonadSyntax[M[_], A](ma: M[A])(implicit m: Monad[M]) {
+  implicit class MonadOps[M[_], A](ma: M[A])(implicit m: Monad[M]) {
     def map[B](fn: A => B): M[B] = m.map(ma)(fn)
     def flatMap[B](fn: A => M[B]): M[B] = m.flatMap(ma)(fn)
   }
@@ -75,12 +81,32 @@ package object typeclasses {
     def monoidFoldLeft(implicit m: Monoid[A]): A = f.monoidFoldLeft(fa)
   }
 
-  implicit val listFoldable = new Foldable[List] {
+  implicit val listFoldable: Foldable[List] = new Foldable[List] {
     def foldLeftM[A, B, M[_]](l: List[A], acc: B)(fn: (B, A) => M[B])(implicit m: Monad[M]): M[B] =
       l match {
         case head :: tail => fn(acc, head) flatMap { foldLeftM(tail, _)(fn) }
         case Nil => m.pure(acc)
       }
   }
+
+  /*** JSON ***/
+
+  trait Json[A] {
+    def toJson(a: A): String
+    def fromJson(json: String): Option[A]
+  }
+
+  implicit val intJson: Json[Int] = new Json[Int] {
+    def toJson(a: Int): String = ??? // TODO
+    def fromJson(json: String): Option[Int] = ??? // TODO
+  }
+
+
+
+
+
+
+
+
 
 }
