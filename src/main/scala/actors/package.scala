@@ -1,7 +1,6 @@
 import util.Random
 
 import java.util.concurrent._
-import collection.mutable
 
 package object actors {
 
@@ -12,24 +11,27 @@ package object actors {
 
   def randomFib: BigInt = fib(Random nextInt 35)
 
-  class Logger extends Runnable {
-    private[this] val messages = mutable.Queue.empty[String]
+  object Logger extends Runnable {
+    private val messages: BlockingQueue[String] =
+      new LinkedBlockingQueue[String]
 
     def log(message: String): Unit = ???
-    def run(): Unit = ???
+    def run(): Unit =
+      while (true) ???
   }
 
   def main(args: Array[String]): Unit = {
     val pool = Executors.newFixedThreadPool(10)
+    pool execute Logger
 
     for (_ <- 1 to 20) {
       val task = new Runnable {
-        def run(): Unit = println(randomFib)
+        def run(): Unit = Logger log randomFib.toString
       }
       pool execute task
     }
 
-    pool.shutdown()
+    // pool.shutdown()
   }
 
 }
