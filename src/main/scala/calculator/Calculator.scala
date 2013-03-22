@@ -43,7 +43,7 @@ object Calculator {
 
   def parse(expression: String): Option[Expression] = {
     val tokens = expression.split(" ")
-    val stack = foldLeftM(tokens.toList, List.empty[Expression], step)
+    val stack = tokens.toList.foldLeftM(List.empty[Expression])(step)
     stack map { _.head }
   }
 

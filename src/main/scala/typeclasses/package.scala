@@ -2,9 +2,15 @@ import language.higherKinds
 
 package object typeclasses {
 
+  /*** MONOID ***/
+
   trait Monoid[A] {
     def id: A
     def append(lhs: A, rhs: A): A
+  }
+
+  implicit class MonoidOps[A](lhs: A)(implicit m: Monoid[A]) {
+    def +(rhs: A): A = m.append(lhs, rhs)
   }
 
   implicit val intMonoid: Monoid[Int] = new Monoid[Int] {
@@ -22,13 +28,25 @@ package object typeclasses {
     def append(lhs: List[A], rhs: List[A]): List[A] = lhs ::: rhs
   }
 
-  def monoidFold[A](l: List[A])(implicit m: Monoid[A]): A =
-    l.foldLeft(m.id)(m.append)
+  /*** MONAD ***/
 
   trait Monad[M[_]] {
     def pure[A](a: A): M[A]
     def map[A, B](ma: M[A])(fn: A => B): M[B]
     def flatMap[A, B](ma: M[A])(fn: A => M[B]): M[B]
+  }
+
+  implicit class MonadSyntax[M[_], A](ma: M[A])(implicit m: Monad[M]) {
+    def map[B](fn: A => B): M[B] = m.map(ma)(fn)
+    def flatMap[B](fn: A => M[B]): M[B] = m.flatMap(ma)(fn)
+  }
+
+  type Id[A] = A
+
+  implicit val idMonad: Monad[Id] = new Monad[Id] {
+    def pure[A](a: A): A = a
+    def map[A, B](a: A)(fn: A => B): B = fn(a)
+    def flatMap[A, B](a: A)(fn: A => B): B = fn(a)
   }
 
   implicit val optionMonad: Monad[Option] = new Monad[Option] {
@@ -39,10 +57,30 @@ package object typeclasses {
       ma flatMap fn
   }
 
-  def foldLeftM[A, B, M[_]](l: List[A], acc: B, fn: (B, A) => M[B])(implicit m: Monad[M]): M[B] =
-    l match {
-      case head :: tail => m.flatMap(fn(acc, head)) { foldLeftM(tail, _, fn) }
-      case Nil => m.pure(acc)
-    }
+  /*** FOLDABLE ***/
+
+  trait Foldable[F[_]] {
+    def foldLeftM[A, B, M[_]](fa: F[A], acc: B)(fn: (B, A) => M[B])(implicit m: Monad[M]): M[B]
+
+    def foldLeft[A, B](fa: F[A], acc: B)(fn: (B, A) => B): B =
+      foldLeftM[A, B, Id](fa, acc)(fn)
+
+    def monoidFoldLeft[A](fa: F[A])(implicit m: Monoid[A]): A =
+      foldLeft(fa, m.id)(m.append)
+  }
+
+  implicit class FoldableOps[F[_], A](fa: F[A])(implicit f: Foldable[F]) {
+    def foldLeftM[B, M[_]](acc: B)(fn: (B, A) => M[B])(implicit m: Monad[M]): M[B] = f.foldLeftM(fa, acc)(fn)
+    def foldLeft[B](acc: B)(fn: (B, A) => B): B = f.foldLeft(fa, acc)(fn)
+    def monoidFoldLeft(implicit m: Monoid[A]): A = f.monoidFoldLeft(fa)
+  }
+
+  implicit val listFoldable = new Foldable[List] {
+    def foldLeftM[A, B, M[_]](l: List[A], acc: B)(fn: (B, A) => M[B])(implicit m: Monad[M]): M[B] =
+      l match {
+        case head :: tail => fn(acc, head) flatMap { foldLeftM(tail, _)(fn) }
+        case Nil => m.pure(acc)
+      }
+  }
 
 }
