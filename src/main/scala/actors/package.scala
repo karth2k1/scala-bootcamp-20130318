@@ -15,9 +15,9 @@ package object actors {
     private val messages: BlockingQueue[String] =
       new LinkedBlockingQueue[String]
 
-    def log(message: String): Unit = ???
+    def log(message: String): Unit = messages.put(message)
     def run(): Unit =
-      while (true) ???
+      while (true) println(messages.take())
   }
 
   def main(args: Array[String]): Unit = {
