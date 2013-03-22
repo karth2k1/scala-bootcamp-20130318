@@ -96,11 +96,28 @@ package object typeclasses {
     def fromJson(json: String): Option[A]
   }
 
-  implicit val intJson: Json[Int] = new Json[Int] {
-    def toJson(a: Int): String = ??? // TODO
-    def fromJson(json: String): Option[Int] = ??? // TODO
+  implicit class JsonOps[A](a: A)(implicit ev: Json[A]) {
+    def toJson: String = ev.toJson(a)
   }
 
+  def fromJson[A](json: String)(implicit ev: Json[A]): Option[A] =
+    ev.fromJson(json)
+
+  implicit val intJson: Json[Int] = new Json[Int] {
+    def toJson(a: Int): String =
+      a.toString
+    def fromJson(json: String): Option[Int] =
+      try {
+        Some(json.toInt)
+      } catch {
+        case _: NumberFormatException => None
+      }
+  }
+
+  implicit val stringJson: Json[String] = new Json[String] {
+    def toJson(a: String): String = ???
+    def fromJson(json: String): Option[String] = ???
+  }
 
 
 
