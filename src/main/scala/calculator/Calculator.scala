@@ -1,5 +1,7 @@
 package calculator
 
+import typeclasses._
+
 object Calculator {
 
   sealed trait Expression
@@ -39,12 +41,9 @@ object Calculator {
       case _ => None
     }
 
-  def optionStep(stack: Option[List[Expression]], token: String): Option[List[Expression]] =
-    stack flatMap { step(_, token) }
-
   def parse(expression: String): Option[Expression] = {
     val tokens = expression.split(" ")
-    val stack = tokens.foldLeft(Option(List.empty[Expression])) { optionStep }
+    val stack = foldLeftM(tokens.toList, List.empty[Expression], step)
     stack map { _.head }
   }
 
